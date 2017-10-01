@@ -1,6 +1,6 @@
 # ConfigurableSoftwareSerial
 ## An Arduino framework library for the ESP8266 Platform
-use this library if you need a software Serial that needs to be configured in a different way rather the default 8N1 (8 bit of data, no parity, 1 stop bit).
+use this library if you need a software Serial that could be configured in a different way rather the default 8N1 (8 bit of data, no parity, 1 stop bit).
 
 Based from the ESPSoftwareSerial library modified to support other serial configuration options
 
@@ -19,7 +19,7 @@ Based from the ESPSoftwareSerial library modified to support other serial config
   - 6
   - 7
   - 8
-  - *note: more not supported (reverted to8)*
+  - *Note: greather not supported (reverted to 8 data bits)*
 
 ## Usage
 On startup call the overloaded **begin** method with the following signature
