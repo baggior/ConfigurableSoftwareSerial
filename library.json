@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/baggior/ConfigurableSoftwareSerial"
   },
-  "version": "1.0",
+  "version": "1.1",
   "frameworks": "arduino",
   "platforms": [
     "espressif",
