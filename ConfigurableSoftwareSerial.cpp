@@ -112,6 +112,7 @@ void ConfigurableSoftwareSerial::begin(long speed, int stopbits, char parity, in
    _stopbits = stopbits;
    _parity = parity;
    _databits = databits;
+   if(_databits<5 && _databits>8) _databits=8;
    
    if (!m_rxEnabled)
     enableRx(true);
