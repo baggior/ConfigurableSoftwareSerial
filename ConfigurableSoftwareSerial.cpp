@@ -23,9 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // The Arduino standard GPIO routines are not enough,
 // must use some from the Espressif SDK as well
+#ifdef ESP8266
 extern "C" {
-#include "gpio.h"
+  #include "gpio.h"
 }
+#endif
 
 #include <ConfigurableSoftwareSerial.h>
 
@@ -234,7 +236,10 @@ void ICACHE_RAM_ATTR ConfigurableSoftwareSerial::rxRead() {
    } else {
       m_overflow = true;
    }
+
+   #ifdef ESP8266
    // Must clear this bit in the interrupt register,
    // it gets set even when interrupts are disabled
    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rxPin);
+   #endif
 }
