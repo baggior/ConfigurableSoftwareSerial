@@ -23,15 +23,35 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // The Arduino standard GPIO routines are not enough,
 // must use some from the Espressif SDK as well
-#ifdef ESP8266
 extern "C" {
+
+#ifdef ESP8266
+
   #include "gpio.h"
-}
+
+#elif defined ESP32
+
+  #include "esp32-hal-gpio.h"
+  
 #endif
+
+}
 
 #include <ConfigurableSoftwareSerial.h>
 
 #define MAX_PIN 15
+
+#ifdef ICACHE_FLASH
+#define ICACHE_FLASH_ATTR   __attribute__((section(".irom0.text")))
+#define ICACHE_RAM_ATTR     __attribute__((section(".iram.text")))
+#define ICACHE_RODATA_ATTR  __attribute__((section(".irom.text")))
+#else
+#define ICACHE_FLASH_ATTR
+#define ICACHE_RAM_ATTR
+#define ICACHE_RODATA_ATTR
+#endif /* ICACHE_FLASH */
+
+#define GPIO_STATUS_W1TC_ADDRESS      0x24
 
 // As the Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible GPIO pins have to be defined
@@ -86,7 +106,7 @@ ConfigurableSoftwareSerial::ConfigurableSoftwareSerial(int receivePin, int trans
          enableRx(true);
       }
    }
-   if (isValidGPIOpin(transmitPin)) {
+   if (isValidGPIOpin(transmitPin) || transmitPin == 16) {
       m_txValid = true;
       m_txPin = transmitPin;
       pinMode(m_txPin, OUTPUT);
@@ -111,6 +131,7 @@ bool ConfigurableSoftwareSerial::isValidGPIOpin(int pin) {
 void ConfigurableSoftwareSerial::begin(long speed, int stopbits, char parity, int databits) {
    // Use getCycleCount() loop to get as exact timing as possible
    m_bitTime = ESP.getCpuFreqMHz()*1000000/speed;
+   m_highSpeed = speed > 9600;
    _stopbits = stopbits;
    _parity = parity;
    _databits = databits;
@@ -160,14 +181,15 @@ int ConfigurableSoftwareSerial::available() {
    return avail;
 }
 
-#define WAIT { while (ESP.getCycleCount()-start < wait); wait += m_bitTime; }
+#define WAIT { while (ESP.getCycleCount()-start < wait) if (!m_highSpeed) optimistic_yield(1); wait += m_bitTime; }
 
 size_t ConfigurableSoftwareSerial::write(uint8_t b) {
    if (!m_txValid) return 0;
 
    if (m_invert) b = ~b;
-   // Disable interrupts in order to get a clean transmit
-   cli();
+   if (m_highSpeed)   
+    // Disable interrupts in order to get a clean transmit
+    cli();
    if (m_txEnableValid) digitalWrite(m_txEnablePin, HIGH);
    unsigned long wait = m_bitTime;
    digitalWrite(m_txPin, HIGH);
@@ -192,7 +214,8 @@ size_t ConfigurableSoftwareSerial::write(uint8_t b) {
    digitalWrite(m_txPin, HIGH);
    for (int i = 0; i < _stopbits; i++) { WAIT; }
    if (m_txEnableValid) digitalWrite(m_txEnablePin, LOW);
-   sei();
+   if (m_highSpeed)
+    sei();
    return 1;
 }
 
@@ -237,9 +260,8 @@ void ICACHE_RAM_ATTR ConfigurableSoftwareSerial::rxRead() {
       m_overflow = true;
    }
 
-   #ifdef ESP8266
    // Must clear this bit in the interrupt register,
    // it gets set even when interrupts are disabled
    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rxPin);
-   #endif
+
 }

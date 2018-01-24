@@ -1,17 +1,18 @@
 {
   "name": "ConfigurableSoftwareSerial",
-  "keywords": "serial, io, software serial, ESP8266",
-  "description": "Software Serial for ESP8266 configurable in numbers of Data Bits, Stop Bits and Parity. Note: the only option for the standard Software Serial is 8N1 (8 bit of data, no parity, 1 stop bit)",
+  "keywords": "serial, io, software serial, ESP8266, ESP32",
+  "description": "Software Serial for ESP8266 and ESP32 configurable in numbers of Data Bits, Stop Bits and Parity. Note: the only option for the standard Software Serial is 8N1 (8 bit of data, no parity, 1 stop bit)",
   "repository":
   {
     "type": "git",
     "url": "https://github.com/baggior/ConfigurableSoftwareSerial"
   },
-  "version": "1.1",
+  "version": "1.2",
   "frameworks": "arduino",
   "platforms": [
-    "espressif",
-    "espressif8266"
+    "avr",
+    "espressif32","esp32",
+    "espressif8266","esp8266"
   ]
   
 }
