@@ -25,21 +25,104 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // must use some from the Espressif SDK as well
 extern "C" {
 
-#ifdef ESP8266
-
-  #include "gpio.h"
-
-#elif defined ESP32
-
+#ifdef ESP32
   #include "esp32-hal-gpio.h"
-  
+#else
+  #include "gpio.h"  
 #endif
 
 }
 
 #include <ConfigurableSoftwareSerial.h>
 
+#define DEFAULT_BUAD_RATE 9600
+
+#ifdef ESP32
+#define MAX_PIN 35
+#else 
 #define MAX_PIN 15
+#endif
+
+
+#ifdef ESP32
+
+
+// As the Arduino attachInterrupt has no parameter, lists of objects
+// and callbacks corresponding to each possible GPIO pins have to be defined
+SoftwareSerial *ObjList[MAX_PIN+1];
+
+void IRAM_ATTR sws_isr_0() { ObjList[0]->rxRead(); };
+void IRAM_ATTR sws_isr_1() { ObjList[1]->rxRead(); };
+void IRAM_ATTR sws_isr_2() { ObjList[2]->rxRead(); };
+void IRAM_ATTR sws_isr_3() { ObjList[3]->rxRead(); };
+void IRAM_ATTR sws_isr_4() { ObjList[4]->rxRead(); };
+void IRAM_ATTR sws_isr_5() { ObjList[5]->rxRead(); };
+// Pin 6 to 11 can not be used
+void IRAM_ATTR sws_isr_12() { ObjList[12]->rxRead(); };
+void IRAM_ATTR sws_isr_13() { ObjList[13]->rxRead(); };
+void IRAM_ATTR sws_isr_14() { ObjList[14]->rxRead(); };
+void IRAM_ATTR sws_isr_15() { ObjList[15]->rxRead(); };
+void IRAM_ATTR sws_isr_16() { ObjList[16]->rxRead(); };
+void IRAM_ATTR sws_isr_17() { ObjList[17]->rxRead(); };
+void IRAM_ATTR sws_isr_18() { ObjList[18]->rxRead(); };
+void IRAM_ATTR sws_isr_19() { ObjList[19]->rxRead(); };
+void IRAM_ATTR sws_isr_20() { ObjList[20]->rxRead(); };
+void IRAM_ATTR sws_isr_21() { ObjList[21]->rxRead(); };
+void IRAM_ATTR sws_isr_22() { ObjList[22]->rxRead(); };
+void IRAM_ATTR sws_isr_23() { ObjList[23]->rxRead(); };
+void IRAM_ATTR sws_isr_24() { ObjList[24]->rxRead(); };
+void IRAM_ATTR sws_isr_25() { ObjList[25]->rxRead(); };
+void IRAM_ATTR sws_isr_26() { ObjList[26]->rxRead(); };
+void IRAM_ATTR sws_isr_27() { ObjList[27]->rxRead(); };
+void IRAM_ATTR sws_isr_28() { ObjList[28]->rxRead(); };
+void IRAM_ATTR sws_isr_29() { ObjList[29]->rxRead(); };
+void IRAM_ATTR sws_isr_30() { ObjList[30]->rxRead(); };
+void IRAM_ATTR sws_isr_31() { ObjList[31]->rxRead(); };
+void IRAM_ATTR sws_isr_32() { ObjList[32]->rxRead(); };
+void IRAM_ATTR sws_isr_33() { ObjList[33]->rxRead(); };
+void IRAM_ATTR sws_isr_34() { ObjList[34]->rxRead(); };
+void IRAM_ATTR sws_isr_35() { ObjList[35]->rxRead(); };
+
+static void (*ISRList[MAX_PIN+1])() = {
+      sws_isr_0,
+      sws_isr_1,
+      sws_isr_2,
+      sws_isr_3,
+      sws_isr_4,
+      sws_isr_5,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+      sws_isr_12,
+      sws_isr_13,
+      sws_isr_14,      
+      sws_isr_15,
+      sws_isr_16,
+      sws_isr_17,
+      sws_isr_18,
+      sws_isr_19,
+      sws_isr_20,
+      sws_isr_21,
+      sws_isr_22,
+      sws_isr_23,
+      sws_isr_24,
+      sws_isr_25,
+      sws_isr_26,
+      sws_isr_27,
+      sws_isr_28,
+      sws_isr_29,
+      sws_isr_30,
+      sws_isr_31,
+      sws_isr_32,
+      sws_isr_33,
+      sws_isr_34,
+      sws_isr_35
+};
+
+#else
 
 #ifdef ICACHE_FLASH
 #define ICACHE_FLASH_ATTR   __attribute__((section(".irom0.text")))
@@ -88,6 +171,9 @@ static void (*ISRList[MAX_PIN+1])() = {
       sws_isr_15
 };
 
+
+#endif
+
 ConfigurableSoftwareSerial::ConfigurableSoftwareSerial(int receivePin, int transmitPin, bool inverse_logic, unsigned int buffSize) {
    m_rxValid = m_txValid = m_txEnableValid = false;
    m_buffer = NULL;
@@ -113,7 +199,7 @@ ConfigurableSoftwareSerial::ConfigurableSoftwareSerial(int receivePin, int trans
       digitalWrite(m_txPin, !m_invert);
    }
    // Default speed
-   begin(9600);
+   //begin(DEFAULT_BUAD_RATE);
 }
 
 ConfigurableSoftwareSerial::~ConfigurableSoftwareSerial() {
@@ -234,7 +320,12 @@ int ConfigurableSoftwareSerial::peek() {
    return m_buffer[m_outPos];
 }
 
-void ICACHE_RAM_ATTR ConfigurableSoftwareSerial::rxRead() {
+#ifdef ESP32
+void IRAM_ATTR 
+#else
+void ICACHE_RAM_ATTR 
+#endif
+ConfigurableSoftwareSerial::rxRead() {
    // Advance the starting point for the samples but compensate for the
    // initial delay which occurs before the interrupt is delivered
    unsigned long wait = m_bitTime + m_bitTime/3 - 500;
@@ -262,6 +353,10 @@ void ICACHE_RAM_ATTR ConfigurableSoftwareSerial::rxRead() {
 
    // Must clear this bit in the interrupt register,
    // it gets set even when interrupts are disabled
+#ifdef ESP32 
+   GPIO_REG_WRITE(GPIO.status_w1tc, 1 << m_rxPin);    
+#else
    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rxPin);
+#endif
 
 }

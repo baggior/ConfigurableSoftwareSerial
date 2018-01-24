@@ -10,9 +10,9 @@
   "version": "1.2",
   "frameworks": "arduino",
   "platforms": [
-    "avr",
-    "espressif32","esp32",
-    "espressif8266","esp8266"
+    "atmelavr",
+    "espressif32",
+    "espressif8266"
   ]
   
 }
