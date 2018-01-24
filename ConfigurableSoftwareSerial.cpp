@@ -44,12 +44,14 @@ extern "C" {
 #endif
 
 
-#ifdef ESP32
-
 
 // As the Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible GPIO pins have to be defined
-SoftwareSerial *ObjList[MAX_PIN+1];
+ConfigurableSoftwareSerial *ObjList[MAX_PIN+1];
+
+
+#ifdef ESP32
+
 
 void IRAM_ATTR sws_isr_0() { ObjList[0]->rxRead(); };
 void IRAM_ATTR sws_isr_1() { ObjList[1]->rxRead(); };
@@ -136,9 +138,6 @@ static void (*ISRList[MAX_PIN+1])() = {
 
 #define GPIO_STATUS_W1TC_ADDRESS      0x24
 
-// As the Arduino attachInterrupt has no parameter, lists of objects
-// and callbacks corresponding to each possible GPIO pins have to be defined
-ConfigurableSoftwareSerial *ObjList[MAX_PIN+1];
 
 void ICACHE_RAM_ATTR sws_isr_0() { ObjList[0]->rxRead(); };
 void ICACHE_RAM_ATTR sws_isr_1() { ObjList[1]->rxRead(); };
